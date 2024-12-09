@@ -3,6 +3,7 @@ import viteReact from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(() => ({
   server: {
@@ -15,5 +16,11 @@ export default defineConfig(() => ({
     TanStackRouterVite(),
     viteReact(),
     svgr(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true,
+      },
+    }),
   ],
 }))
