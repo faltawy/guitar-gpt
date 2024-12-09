@@ -68,7 +68,6 @@ function AssistantMessageItem({
   message,
 }: { message: Extract<ChatMessage, { role: 'assistant' }> }) {
   const hasNotes = message.notes && message.notes.length > 0
-  console.log(message.notes)
   const handleReplay = async () => {
     if (message.notes) {
       playGuitarNotes(message.notes)
