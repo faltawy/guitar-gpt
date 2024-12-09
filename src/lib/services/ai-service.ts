@@ -4,6 +4,7 @@ import OpenAI from 'openai'
 import { zodResponseFormat } from 'openai/helpers/zod'
 import { z } from 'zod'
 import { availableNotes } from '../music-producer/notes-map'
+import { useSettings } from '@/lib/stores/settings'
 
 const AIResponseSchema = z.object({
   message: z.string(),
@@ -26,11 +27,18 @@ please respond in markdown for the text messages
 const MAX_CONTEXT_MESSAGES = 20
 export class AIService {
   private static instance: AIService
-  private openai: OpenAI
+  private openai: OpenAI | null = null
 
   private constructor() {
+    const apiKey = useSettings.getState().apiKey
+    if (apiKey) {
+      this.initializeOpenAI(apiKey)
+    }
+  }
+
+  private initializeOpenAI(apiKey: string) {
     this.openai = new OpenAI({
-      apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+      apiKey,
       dangerouslyAllowBrowser: true,
     })
   }
@@ -59,9 +67,17 @@ export class AIService {
 
   async chat(messages: ChatMessage[]) {
     try {
+      if (!this.openai) {
+        const apiKey = useSettings.getState().apiKey
+        if (!apiKey) {
+          throw new Error('API key not set')
+        }
+        this.initializeOpenAI(apiKey)
+      }
+
       const contextMessages = this.prepareContext(messages)
 
-      const completion = await this.openai.beta.chat.completions.parse({
+      const completion = await this.openai?.beta.chat.completions.parse({
         model: 'gpt-4o', // keep this model gpt-4o
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
