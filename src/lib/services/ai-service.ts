@@ -1,0 +1,91 @@
+import { noteSchema, playGuitarNotes } from '@/lib/music-producer'
+import type { ChatMessage } from '@/lib/db'
+import OpenAI from 'openai'
+import { zodResponseFormat } from 'openai/helpers/zod'
+import { z } from 'zod'
+import { availableNotes } from '../music-producer/notes-map'
+
+const AIResponseSchema = z.object({
+  message: z.string(),
+  notes: z.array(noteSchema).optional(),
+})
+
+export type AIResponse = z.infer<typeof AIResponseSchema>
+
+const SYSTEM_PROMPT = `
+You are GuitarGPT, an AI assistant specialized in guitar and music theory
+when you play a note please explain it to the user in a way that is easy to understand,
+please respond in markdown for the text messages
+
+- availabe notes are ${availableNotes.join('\t')}
+- generate detailed explanations for the notes
+- don't generate notes if the user doesn't ask for them
+
+`
+
+const MAX_CONTEXT_MESSAGES = 20
+export class AIService {
+  private static instance: AIService
+  private openai: OpenAI
+
+  private constructor() {
+    this.openai = new OpenAI({
+      apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+      dangerouslyAllowBrowser: true,
+    })
+  }
+
+  static getInstance(): AIService {
+    if (!AIService.instance) {
+      AIService.instance = new AIService()
+    }
+    return AIService.instance
+  }
+
+  private prepareContext(messages: ChatMessage[]) {
+    // Take last N messages for context
+    const contextMessages = messages.slice(-MAX_CONTEXT_MESSAGES)
+
+    // Always include the first message if it exists (for conversation context)
+    if (messages.length > MAX_CONTEXT_MESSAGES && messages[0]) {
+      contextMessages.unshift(messages[0])
+    }
+
+    return contextMessages.map((msg) => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content,
+    }))
+  }
+
+  async chat(messages: ChatMessage[]) {
+    try {
+      const contextMessages = this.prepareContext(messages)
+
+      const completion = await this.openai.beta.chat.completions.parse({
+        model: 'gpt-4o', // keep this model gpt-4o
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...contextMessages,
+        ],
+        response_format: zodResponseFormat(AIResponseSchema, 'AIResponse'),
+      })
+
+      const response = completion?.choices[0]?.message.parsed
+      if (!response) throw new Error('No valid response from AI')
+
+      // Play the notes if they exist
+      if (response.notes) {
+        playGuitarNotes(response.notes)
+      }
+
+      return response
+    } catch (error) {
+      console.error('AI Service Error:', error)
+      return {
+        message: 'Sorry, I encountered an error. Please try again.',
+      }
+    }
+  }
+}
+
+export const aiService = AIService.getInstance()

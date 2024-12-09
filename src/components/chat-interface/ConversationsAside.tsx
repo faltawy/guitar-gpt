@@ -1,0 +1,210 @@
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { MessageSquare, MoreVertical, Plus, User } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarRail,
+} from '../ui/sidebar'
+import { useChat } from '@/contexts/chat-context'
+import type { ChatSession } from '@/lib/db'
+import { Input } from '@/components/ui/input'
+import { useState, useRef, useEffect } from 'react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+
+export function ConversationsAside() {
+  const {
+    sessions,
+    activeSessionId,
+    setActiveSessionId,
+    deleteSession,
+    renameSession,
+  } = useChat()
+
+  return (
+    <Sidebar variant="inset">
+      <SidebarHeader className="p-2">
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-2"
+          onClick={() => setActiveSessionId(null)}
+        >
+          <Plus className="h-4 w-4" />
+          New Chat
+        </Button>
+      </SidebarHeader>
+      <SidebarContent className="flex flex-col">
+        <SidebarGroup className="flex-1">
+          <SidebarGroupLabel>Conversations</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <ScrollArea className="flex-1 px-2 py-4">
+              {sessions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-2 p-4 text-center text-sm text-muted-foreground">
+                  <MessageSquare className="h-8 w-8" />
+                  <p>No conversations yet</p>
+                  <p>Start a new chat to begin</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {sessions.map((session) => (
+                    <ConversationItem
+                      key={session.id}
+                      session={session}
+                      isActive={session.id === activeSessionId}
+                      onSelect={() => setActiveSessionId(session.id!)}
+                      onDelete={() => deleteSession(session.id!)}
+                      onRename={(title) => renameSession(session.id!, title)}
+                    />
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
+              <Avatar>
+                <AvatarImage src="" />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 text-sm font-medium">User</div>
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarRail />
+    </Sidebar>
+  )
+}
+
+function ConversationItem({
+  session,
+  isActive,
+  onSelect,
+  onDelete,
+  onRename,
+}: {
+  session: ChatSession
+  isActive: boolean
+  onSelect: () => void
+  onDelete: () => void
+  onRename: (title: string) => void
+}) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedTitle, setEditedTitle] = useState(session.title)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleRename = () => {
+    const newTitle = editedTitle.trim()
+    if (newTitle && newTitle !== session.title) {
+      console.log('Renaming session:', session.id, 'to:', newTitle)
+      onRename(newTitle)
+    } else {
+      setEditedTitle(session.title)
+    }
+    setIsEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleRename()
+    } else if (e.key === 'Escape') {
+      setEditedTitle(session.title)
+      setIsEditing(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
+  }, [isEditing])
+
+  return (
+    <div
+      role="button"
+      onClick={isEditing ? undefined : onSelect}
+      className={cn(
+        'group relative flex flex-col gap-1 rounded-lg p-3 text-sm transition-colors hover:bg-accent/50',
+        isActive && 'bg-accent/50',
+        isEditing ? 'cursor-default' : 'cursor-pointer',
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-1">
+          <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
+          {isEditing ? (
+            <Input
+              ref={inputRef}
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onBlur={handleRename}
+              onKeyDown={handleKeyDown}
+              className="h-6 px-1"
+            />
+          ) : (
+            <span className="font-medium line-clamp-1">{session.title}</span>
+          )}
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">More options</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault()
+                setIsEditing(true)
+              }}
+            >
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive"
+              onSelect={(e) => {
+                e.preventDefault()
+                onDelete()
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <p className="line-clamp-1 flex-1">{session.lastMessage}</p>
+        <time
+          className="ml-2 shrink-0"
+          dateTime={session.createdAt.toISOString()}
+        >
+          {new Date(session.createdAt).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+          })}
+        </time>
+      </div>
+    </div>
+  )
+}
