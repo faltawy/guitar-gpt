@@ -7,7 +7,7 @@ import Markdown from 'react-markdown'
 import { Button } from '../ui/button'
 import { playGuitarNotes } from '@/lib/music-producer'
 import type { ChatMessage } from '@/lib/db'
-
+import remarkGfm from 'remark-gfm'
 type Props = {
   messages: ChatMessage[]
 }
@@ -81,7 +81,10 @@ function AssistantMessageItem({
         <AvatarFallback>GB</AvatarFallback>
       </Avatar>
       <div className="bg-secondary/10 rounded-lg px-4 py-2 max-w-[85%]">
-        <Markdown className="prose prose-invert prose-sm">
+        <Markdown
+          remarkPlugins={[remarkGfm]}
+          className="prose prose-invert prose-sm"
+        >
           {message.content}
         </Markdown>
         {hasNotes && (
