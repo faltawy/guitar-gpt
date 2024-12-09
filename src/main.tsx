@@ -10,6 +10,8 @@ import '@fontsource/geist-mono/600.css'
 import '@fontsource/geist-mono/700.css'
 import '@fontsource-variable/cairo'
 import './index.css'
+import { ProfileProvider } from './contexts/profile-context'
+import { OnboardingDialog } from './components/onboarding-dialog'
 
 const isBotAgent = /bot|googlebot|crawler|spider|robot|crawling/i.test(
   navigator.userAgent,
@@ -39,7 +41,10 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="guitar-gpt-theme">
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <ProfileProvider>
+          <RouterProvider router={router} />
+          <OnboardingDialog />
+        </ProfileProvider>
       </QueryClientProvider>
     </ThemeProvider>
   </React.StrictMode>,

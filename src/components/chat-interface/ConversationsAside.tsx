@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { MessageSquare, MoreVertical, Plus, User } from 'lucide-react'
+import { MessageSquare, MoreVertical, Plus, User, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -18,10 +18,14 @@ import {
   SidebarRail,
 } from '../ui/sidebar'
 import { useChat } from '@/contexts/chat-context'
+import { useProfile } from '@/contexts/profile-context'
 import type { ChatSession } from '@/lib/db'
 import { Input } from '@/components/ui/input'
 import { useState, useRef, useEffect } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Label } from '@/components/ui/label'
+import { useSettings } from '@/lib/stores/settings'
 
 export function ConversationsAside() {
   const {
@@ -31,6 +35,39 @@ export function ConversationsAside() {
     deleteSession,
     renameSession,
   } = useChat()
+  const { profile, isLoading, updateProfile } = useProfile()
+  const { apiKey, setApiKey } = useSettings()
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState(profile?.name || '')
+  const [editApiKey, setEditApiKey] = useState(apiKey || '')
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (profile?.name) setEditName(profile.name)
+    if (apiKey) setEditApiKey(apiKey)
+  }, [profile?.name, apiKey])
+
+  const handleSave = async () => {
+    try {
+      if (!editName.trim()) {
+        setError('Name is required')
+        return
+      }
+
+      if (!editApiKey.trim() || !editApiKey.startsWith('sk-')) {
+        setError('Valid API key is required')
+        return
+      }
+
+      await updateProfile({ name: editName.trim() })
+      setApiKey(editApiKey.trim())
+      setIsEditing(false)
+      setError(null)
+    } catch (err) {
+      console.error('Error updating profile:', err)
+      setError('Failed to update profile')
+    }
+  }
 
   return (
     <Sidebar variant="inset">
@@ -74,15 +111,88 @@ export function ConversationsAside() {
         </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupContent>
-            <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
-              <Avatar>
-                <AvatarImage src="" />
-                <AvatarFallback>
-                  <User className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 text-sm font-medium">User</div>
-            </div>
+            {isLoading ? (
+              <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {isEditing ? (
+                  <div className="bg-muted/50 p-2 rounded-lg space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        value={editName}
+                        onChange={(e) => {
+                          setEditName(e.target.value)
+                          setError(null)
+                        }}
+                        placeholder="Enter your name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="apiKey">API Key</Label>
+                      <Input
+                        id="apiKey"
+                        value={editApiKey}
+                        onChange={(e) => {
+                          setEditApiKey(e.target.value)
+                          setError(null)
+                        }}
+                        type="password"
+                        placeholder="sk-..."
+                      />
+                    </div>
+                    {error && (
+                      <p className="text-xs text-destructive">{error}</p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          setIsEditing(false)
+                          setError(null)
+                          setEditName(profile?.name || '')
+                          setEditApiKey(apiKey || '')
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button size="sm" className="flex-1" onClick={handleSave}>
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
+                    <Avatar>
+                      <AvatarImage src={profile?.avatar} />
+                      <AvatarFallback className="bg-primary/10">
+                        {profile?.name?.[0]?.toUpperCase() || (
+                          <User className="h-4 w-4" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 text-sm font-medium">
+                      {profile?.name || 'User'}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span className="sr-only">Edit Profile</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

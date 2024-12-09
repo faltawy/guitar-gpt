@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import { Note } from './music-producer'
+import type { Note } from './music-producer'
 
 export interface Profile {
   id?: number
