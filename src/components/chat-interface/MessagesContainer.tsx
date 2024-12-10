@@ -8,6 +8,8 @@ import { Button } from '../ui/button'
 import { playGuitarNotes } from '@/lib/music-producer'
 import type { ChatMessage } from '@/lib/db'
 import remarkGfm from 'remark-gfm'
+import { NoteVisualizer } from './NoteVisualizer'
+
 type Props = {
   messages: ChatMessage[]
 }
@@ -80,25 +82,23 @@ function AssistantMessageItem({
         <AvatarImage src="/guitar-bot.png" />
         <AvatarFallback>GB</AvatarFallback>
       </Avatar>
-      <div className="bg-secondary/10 rounded-lg px-4 py-2 max-w-[85%]">
-        <Markdown
-          remarkPlugins={[remarkGfm]}
-          className="prose prose-invert prose-sm"
-        >
-          {message.content}
-        </Markdown>
-        {hasNotes && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2"
-            onClick={handleReplay}
+      <div className="flex flex-col gap-2 max-w-[85%]">
+        <div className="bg-secondary/10 rounded-lg px-4 py-2">
+          <Markdown
+            remarkPlugins={[remarkGfm]}
+            className="prose prose-invert prose-sm"
           >
-            <PlayCircle className="h-4 w-4 mr-2" />
-            Replay Melody
-          </Button>
+            {message.content}
+          </Markdown>
+          {message.isLoading && <LoadingDots />}
+        </div>
+        {hasNotes && (
+          <NoteVisualizer
+            notes={message.notes}
+            onReplay={handleReplay}
+            isPlaying={message.isLoading}
+          />
         )}
-        {message.isLoading && <LoadingDots />}
       </div>
     </div>
   )
