@@ -1,4 +1,7 @@
 import { useEffect, useRef } from 'react'
+import { useChat } from '@/contexts/chat-context'
+import { aiService } from '@/lib/services/ai-service'
+import { db } from '@/lib/db'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '../ui/skeleton'
@@ -16,6 +19,7 @@ type Props = {
 
 export function MessagesContainer({ messages }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const { activeSessionId } = useChat()
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })

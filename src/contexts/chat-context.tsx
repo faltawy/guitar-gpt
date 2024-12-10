@@ -9,6 +9,7 @@ import { db, type ChatMessage, type ChatSession } from '@/lib/db'
 import { aiService } from '@/lib/services/ai-service'
 import { playGuitarNotes } from '@/lib/music-producer'
 import { chatReducer, type ChatState } from '@/lib/reducers/chat-reducer'
+import { useLiveQuery } from 'dexie-react-hooks'
 
 interface ChatContextType {
   activeSessionId: number | null
@@ -26,29 +27,15 @@ const ChatContext = createContext<ChatContextType | null>(null)
 
 const initialState: ChatState = {
   activeSessionId: null,
-  sessions: [],
   messages: [],
   isLoading: false,
 }
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(chatReducer, initialState)
-
-  // Load sessions
-  useEffect(() => {
-    async function loadSessions() {
-      const sessions = await db.sessions
-        .orderBy('updatedAt')
-        .reverse()
-        .toArray()
-      dispatch({ type: 'SET_SESSIONS', payload: sessions })
-      const firstSession = sessions.at(0)
-      if (firstSession && firstSession.id && !state.activeSessionId) {
-        dispatch({ type: 'SET_ACTIVE_SESSION', payload: firstSession.id })
-      }
-    }
-    loadSessions()
-  }, [])
+  const sessions = useLiveQuery(() =>
+    db.sessions.orderBy('updatedAt').reverse().toArray(),
+  )
 
   // Load messages when active session changes
   useEffect(() => {
@@ -75,22 +62,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       updatedAt: new Date(),
       profileId: 1, // TODO: Get from profile context
     })
-
-    const newSession = await db.sessions.get(id)
-    if (newSession) {
-      dispatch({
-        type: 'SET_SESSIONS',
-        payload: [newSession, ...state.sessions],
-      })
-      dispatch({ type: 'SET_ACTIVE_SESSION', payload: id })
-    }
     return id
-  }, [state.sessions])
+  }, [])
 
   const deleteSession = useCallback(async (id: number) => {
     await db.sessions.delete(id)
     await db.messages.where('sessionId').equals(id).delete()
-    dispatch({ type: 'DELETE_SESSION', payload: id })
   }, [])
 
   const setActiveSessionId = useCallback((id: number | null) => {
@@ -101,10 +78,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     await db.sessions.update(id, {
       title,
       updatedAt: new Date(),
-    })
-    dispatch({
-      type: 'UPDATE_SESSION',
-      payload: { id, updates: { title, updatedAt: new Date() } },
     })
   }, [])
 
@@ -134,14 +107,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           lastMessage: content,
           updatedAt: new Date(),
         })
-        dispatch({
-          type: 'UPDATE_SESSION',
-          payload: {
-            id: sessionId,
-            updates: { lastMessage: content, updatedAt: new Date() },
-          },
-        })
-
         // Create and add loading assistant message
         const loadingMessage: ChatMessage = {
           sessionId,
@@ -201,7 +166,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     <ChatContext.Provider
       value={{
         activeSessionId: state.activeSessionId,
-        sessions: state.sessions,
+        sessions: sessions || [],
         messages: state.messages,
         isLoading: state.isLoading,
         sendMessage,

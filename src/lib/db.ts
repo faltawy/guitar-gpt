@@ -16,6 +16,7 @@ export interface ChatSession {
   updatedAt: Date
   profileId: number
   lastMessage?: string
+  hasGeneratedTitle?: boolean
 }
 
 interface BotMessage {

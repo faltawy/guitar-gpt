@@ -11,6 +11,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -81,10 +82,9 @@ export function ConversationsAside() {
           New Chat
         </Button>
       </SidebarHeader>
-      <SidebarContent className="flex flex-col">
+      <SidebarContent>
         <SidebarGroup className="flex-1">
-          <SidebarGroupLabel>Conversations</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="h-full">
             <ScrollArea className="flex-1 px-2 py-4">
               {sessions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 p-4 text-center text-sm text-muted-foreground">
@@ -109,93 +109,89 @@ export function ConversationsAside() {
             </ScrollArea>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            {isLoading ? (
-              <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <Skeleton className="h-4 w-24" />
+      </SidebarContent>
+      <SidebarFooter>
+        {isLoading ? (
+          <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {isEditing ? (
+              <div className="bg-muted/50 p-2 rounded-lg space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={editName}
+                    onChange={(e) => {
+                      setEditName(e.target.value)
+                      setError(null)
+                    }}
+                    placeholder="Enter your name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">API Key</Label>
+                  <Input
+                    id="apiKey"
+                    value={editApiKey}
+                    onChange={(e) => {
+                      setEditApiKey(e.target.value)
+                      setError(null)
+                    }}
+                    type="password"
+                    placeholder="sk-..."
+                  />
+                </div>
+                {error && <p className="text-xs text-destructive">{error}</p>}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      setIsEditing(false)
+                      setError(null)
+                      setEditName(profile?.name || '')
+                      setEditApiKey(apiKey || '')
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button size="sm" className="flex-1" onClick={handleSave}>
+                    Save
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {isEditing ? (
-                  <div className="bg-muted/50 p-2 rounded-lg space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={editName}
-                        onChange={(e) => {
-                          setEditName(e.target.value)
-                          setError(null)
-                        }}
-                        placeholder="Enter your name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="apiKey">API Key</Label>
-                      <Input
-                        id="apiKey"
-                        value={editApiKey}
-                        onChange={(e) => {
-                          setEditApiKey(e.target.value)
-                          setError(null)
-                        }}
-                        type="password"
-                        placeholder="sk-..."
-                      />
-                    </div>
-                    {error && (
-                      <p className="text-xs text-destructive">{error}</p>
+              <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
+                <Avatar>
+                  <AvatarImage src={profile?.avatar} />
+                  <AvatarFallback className="bg-primary/10">
+                    {profile?.name?.[0]?.toUpperCase() || (
+                      <User className="h-4 w-4" />
                     )}
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          setIsEditing(false)
-                          setError(null)
-                          setEditName(profile?.name || '')
-                          setEditApiKey(apiKey || '')
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button size="sm" className="flex-1" onClick={handleSave}>
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
-                    <Avatar>
-                      <AvatarImage src={profile?.avatar} />
-                      <AvatarFallback className="bg-primary/10">
-                        {profile?.name?.[0]?.toUpperCase() || (
-                          <User className="h-4 w-4" />
-                        )}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 text-sm font-medium">
-                      {profile?.name || 'User'}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Settings className="h-4 w-4" />
-                      <span className="sr-only">Edit Profile</span>
-                    </Button>
-                  </div>
-                )}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-sm font-medium">
+                  {profile?.name || 'User'}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="sr-only">Edit Profile</span>
+                </Button>
               </div>
             )}
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+          </div>
+        )}
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

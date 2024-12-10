@@ -5,6 +5,7 @@ import { zodResponseFormat } from 'openai/helpers/zod'
 import { z } from 'zod'
 import { availableNotes } from '../music-producer/notes-map'
 import { useSettings } from '@/lib/stores/settings'
+import { db } from '@/lib/db'
 
 const AIResponseSchema = z.object({
   message: z.string(),
@@ -79,7 +80,7 @@ export class AIService {
       const contextMessages = this.prepareContext(messages)
 
       const completion = await this.openai?.beta.chat.completions.parse({
-        model: 'gpt-4o', // keep this model gpt-4o
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...contextMessages,
@@ -89,6 +90,24 @@ export class AIService {
 
       const response = completion?.choices[0]?.message.parsed
       if (!response) throw new Error('No valid response from AI')
+
+      if (messages.length >= 5) {
+        const sessionId = messages[0]?.sessionId
+        if (sessionId) {
+          const allMessages = [
+            ...messages,
+            {
+              role: 'assistant',
+              content: response.message,
+              sessionId,
+              createdAt: new Date(),
+              isLoading: false,
+              notes: response.notes,
+            } as ChatMessage,
+          ]
+          await this.generateTitleInBackground(sessionId, allMessages)
+        }
+      }
 
       // Play the notes if they exist
       if (response.notes) {
@@ -102,6 +121,48 @@ export class AIService {
         message: 'Sorry, I encountered an error. Please try again.',
       }
     }
+  }
+
+  private async generateTitleInBackground(
+    sessionId: number,
+    messages: ChatMessage[],
+  ) {
+    try {
+      const session = await db.sessions.get(sessionId)
+
+      if (session && !session.hasGeneratedTitle) {
+        const prompt = messages.map((m) => m.content).join('\n')
+        const title = await this.generateTitle(prompt)
+
+        await db.sessions.update(sessionId, {
+          title,
+          hasGeneratedTitle: true,
+          updatedAt: new Date(),
+        })
+      }
+    } catch (error) {
+      console.error('Title generation error:', error)
+    }
+  }
+
+  async generateTitle(conversation: string): Promise<string> {
+    const response = await this.openai?.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Generate a short, concise title (max 6 words) for this guitar-related conversation.',
+        },
+        { role: 'user', content: conversation },
+      ],
+      temperature: 0.7,
+      max_tokens: 20,
+    })
+
+    return (
+      response?.choices[0]?.message?.content?.trim() || 'Guitar Conversation'
+    )
   }
 }
 
