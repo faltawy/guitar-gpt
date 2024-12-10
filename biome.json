@@ -39,7 +39,8 @@
       }
     },
     "ignore": [
-      "**/dist/",
+      "**/dist/*",
+      "**/dev-dist/*",
       "**/node_modules/",
       "**/prettier.config.js",
       "**/postcss.config.js"

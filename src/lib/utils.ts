@@ -29,7 +29,7 @@ export function createDedupeFn<
     } catch (e) {
       throw new Error(
         'Invalid arguments: ' +
-        (e as ZodError).errors.map((err) => err.message).join(', '),
+          (e as ZodError).errors.map((err) => err.message).join(', '),
       )
     }
 

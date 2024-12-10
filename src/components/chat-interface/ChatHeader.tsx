@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/ui/sidebar'
+import { useChat } from '@/contexts/chat-context'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +36,9 @@ export function ChatHeader() {
   const { setTheme } = useTheme()
   const { clearHistory } = useSettings()
   const [isAlertOpen, setIsAlertOpen] = useState(false)
+  const { activeSessionId, sessions } = useChat()
+
+  const activeSession = sessions.find((s) => s.id === activeSessionId)
 
   return (
     <header className="bg-background">
@@ -51,7 +55,17 @@ export function ChatHeader() {
         <div className="flex flex-1 items-center justify-between">
           <div className="flex items-center gap-2">
             <Music className="h-5 w-5" />
-            <h1 className="text-sm font-medium">Guitar GPT</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-medium">Guitar GPT</h1>
+              {activeSession && (
+                <>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="text-sm text-muted-foreground">
+                    {activeSession.title}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
