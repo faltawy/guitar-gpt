@@ -146,7 +146,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const loadingMessage: ChatMessage = {
           sessionId,
           role: 'assistant',
-          content: '...',
+          content: '',
           createdAt: new Date(),
           isLoading: true,
           notes: [],

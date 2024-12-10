@@ -2,11 +2,25 @@ import * as Tone from 'tone'
 import z from 'zod'
 import { noteNameSchema, notesMap } from './notes-map'
 
-const noteDuration = z.enum(['4n', '8n', '16n', '32n'])
+const noteDuration = z.enum([
+  '1n',
+  '2n',
+  '2n.',
+  '4n',
+  '4n.',
+  '8n',
+  '8n.',
+  '16n',
+])
 
 export const noteSchema = z.object({
-  note: noteNameSchema,
-  duration: noteDuration,
+  note: noteNameSchema.describe('Name of the note'),
+  duration: noteDuration.describe('Duration of the note'),
+  velocity: z.number().describe('Velocity of the note, min 0, max 1'),
+  time: z.number().optional().describe('Time to play the note in seconds'),
+  pan: z.number().optional().describe('Panning of the note, min -1, max 1'),
+  reverb: z.boolean().optional().describe('Reverb effect'),
+  delay: z.boolean().optional().describe('Delay effect'),
 })
 
 export type Note = z.infer<typeof noteSchema>
@@ -44,15 +58,28 @@ export function playGuitarNote(
   note: keyof typeof notesMap,
   duration: string,
   time?: number,
-  effects: { reverb?: boolean; delay?: boolean } = {},
+  velocity: number = 0.8,
+  effects: {
+    reverb?: boolean
+    delay?: boolean
+    pan?: number
+  } = {},
 ) {
   if (!state.loaded) {
     console.error('Guitar samples are not loaded yet!')
     return
   }
 
-  // Add effects if specified
+  // Create a chain starting with the sampler
   let chain = guitarSampler
+
+  // Add panning if specified
+  if (effects.pan !== undefined) {
+    const panner = new Tone.Panner(effects.pan).toDestination()
+    chain.connect(panner)
+  }
+
+  // Add effects if specified
   if (effects.reverb) {
     const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 }).toDestination()
     chain.connect(reverb)
@@ -66,11 +93,11 @@ export function playGuitarNote(
     chain.connect(delay)
   }
 
-  // Schedule the note to play at the specified time
+  // Schedule the note to play at the specified time with velocity
   if (time !== undefined) {
-    chain.triggerAttackRelease(note, duration, time)
+    chain.triggerAttackRelease(note, duration, time, velocity)
   } else {
-    chain.triggerAttackRelease(note, duration, Tone.now())
+    chain.triggerAttackRelease(note, duration, Tone.now(), velocity)
   }
 }
 
