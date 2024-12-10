@@ -18,7 +18,8 @@
     "lineEnding": "lf",
     "lineWidth": 80,
     "attributePosition": "auto",
-    "bracketSpacing": true
+    "bracketSpacing": true,
+    "ignore": ["**/dist/*", "**/dev-dist/*"]
   },
   "organizeImports": {
     "enabled": true
@@ -40,7 +41,6 @@
     },
     "ignore": [
       "**/dist/*",
-      "**/dev-dist/*",
       "**/node_modules/",
       "**/prettier.config.js",
       "**/postcss.config.js"
@@ -58,5 +58,10 @@
       "attributePosition": "auto",
       "bracketSpacing": true
     }
-  }
+  },
+  "overrides": [
+    {
+      "ignore": ["**/dist/*", "**/dev-dist/*"]
+    }
+  ]
 }

@@ -1,17 +1,13 @@
 import { useEffect, useRef } from 'react'
-import { useChat } from '@/contexts/chat-context'
-import { aiService } from '@/lib/services/ai-service'
-import { db } from '@/lib/db'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '../ui/skeleton'
-import { Music, PlayCircle } from 'lucide-react'
+import { Music } from 'lucide-react'
 import Markdown from 'react-markdown'
-import { Button } from '../ui/button'
-import { playGuitarNotes } from '@/lib/music-producer'
 import type { ChatMessage } from '@/lib/db'
 import remarkGfm from 'remark-gfm'
 import { NoteVisualizer } from './NoteVisualizer'
+import { playGuitarNotes } from '@/lib/music-producer'
 
 type Props = {
   messages: ChatMessage[]
@@ -19,7 +15,6 @@ type Props = {
 
 export function MessagesContainer({ messages }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
-  const { activeSessionId } = useChat()
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
