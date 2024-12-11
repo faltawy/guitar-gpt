@@ -20,8 +20,10 @@ export default defineConfig(() => ({
     svgr(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'script-defer',
+      outDir: 'dist/assets',
       devOptions: {
-        enabled: true,
+        enabled: false,
       },
     }),
   ],
