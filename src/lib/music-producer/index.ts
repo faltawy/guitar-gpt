@@ -40,7 +40,7 @@ function createGuitarSampler() {
     () => {
       state.loaded = true
     },
-    import.meta.env.VERCEL_URL || 'http://localhost:3000/',
+    `https://${import.meta.env.VERCEL_URL}` || 'http://localhost:3000/',
   ).toDestination()
 
   return sampler
