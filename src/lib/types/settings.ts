@@ -1,9 +1,8 @@
 export interface GuitarSettings {
+  enabled: boolean
   volume: number
-  distortion: number
   reverb: number
   delay: number
-  type: 'acoustic' | 'electric' | 'classical'
 }
 
 export interface Settings {
@@ -11,14 +10,15 @@ export interface Settings {
 }
 
 export const DEFAULT_GUITAR_SETTINGS: GuitarSettings = {
+  enabled: false,
   volume: 0.8,
-  distortion: 0,
-  reverb: 0.2,
+  reverb: 0,
   delay: 0,
-  type: 'acoustic',
 }
 
 export interface SettingsState {
+  settings: Settings
+  updateSettings: (settings: Partial<Settings>) => void
   theme: 'light' | 'dark' | 'system'
   clearHistory: () => void
   // ... other existing settings

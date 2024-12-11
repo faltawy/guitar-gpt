@@ -1,58 +1,76 @@
-import { useCallback, useRef, useEffect } from 'react'
-import { Textarea } from '@/components/ui/textarea'
+import React from 'react'
 import { Button } from '@/components/ui/button'
-import { Send } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Card } from '@/components/ui/card'
+import { Textarea } from '../ui/textarea'
+import { SendHorizonal } from 'lucide-react'
 
-type Props = {
+interface ChatInputProps {
   onSubmit: (message: string) => void
   disabled?: boolean
 }
 
-export function ChatInput({ onSubmit, disabled }: Props) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+const SUGGESTED_QUESTIONS = [
+  'Play a C major chord',
+  'Can you play happy birthday?',
+  'Play some jazz chords',
+  'Teach me basic guitar chords',
+]
 
-  const handleSubmit = useCallback(() => {
-    if (!textareaRef.current?.value.trim()) return
-    onSubmit(textareaRef.current.value)
-    textareaRef.current.value = ''
-    textareaRef.current.style.height = 'auto'
-  }, [onSubmit])
+export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
+  const [message, setMessage] = React.useState('')
+  const [showSuggestions, setShowSuggestions] = React.useState(false)
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault()
-        handleSubmit()
-      }
-    },
-    [handleSubmit],
-  )
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (message.trim()) {
+      onSubmit(message.trim())
+      setMessage('')
+      setShowSuggestions(false)
+    }
+  }
+
+  const handleSuggestionClick = (suggestion: string) => {
+    onSubmit(suggestion)
+    setShowSuggestions(false)
+  }
 
   return (
-    <div className="mx-auto shrink-0 w-full max-w-3xl p-4">
-      <div className="relative flex items-end gap-2">
+    <div className="container">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 relative">
+        {showSuggestions && (
+          <div className="absolute bottom-full w-full p-2">
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTED_QUESTIONS.map((suggestion) => (
+                <Button
+                  key={suggestion}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <Textarea
-          ref={textareaRef}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onFocus={() => setShowSuggestions(true)}
           placeholder="Ask me to play something..."
-          className="min-h-[60px]  w-full resize-none bg-background pr-12"
-          onKeyDown={handleKeyDown}
+          className="resize-none"
           disabled={disabled}
-          rows={1}
         />
         <Button
+          type="submit"
           size="icon"
-          onClick={handleSubmit}
-          disabled={disabled}
+          disabled={disabled || !message.trim()}
           className="absolute bottom-2 right-2"
         >
-          <Send className="h-4 w-4" />
-          <span className="sr-only">Send message</span>
+          <SendHorizonal className="w-4 h-4" />
         </Button>
-      </div>
-      <div className="mt-4 text-xs text-muted-foreground">
-        Press <kbd className="rounded bg-muted px-1">Enter</kbd> to send,{' '}
-        <kbd className="rounded bg-muted px-1">Shift + Enter</kbd> for new line
-      </div>
+      </form>
     </div>
   )
 }

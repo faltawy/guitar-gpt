@@ -1,46 +1,85 @@
-import React from 'react'
+import type React from 'react'
 import { useSettings } from '../contexts/settings-context'
 
-export function GuitarSettings() {
-  const { settings, updateGuitarSettings } = useSettings()
+export const GuitarSettings: React.FC = () => {
+  const { settings, updateSettings } = useSettings()
+
+  const handleSettingChange = (
+    key: keyof typeof settings.guitar,
+    value: number | boolean,
+  ) => {
+    updateSettings({
+      guitar: {
+        ...settings.guitar,
+        [key]: value,
+      },
+    })
+  }
 
   return (
-    <div className="guitar-settings">
-      <h3>Guitar Settings</h3>
+    <div className="guitar-settings space-y-4">
+      <h3 className="text-lg font-semibold mb-2">Guitar Settings</h3>
 
-      <div className="setting-group">
-        <label>
-          Volume
+      <div className="flex items-center mb-4">
+        <label className="flex items-center cursor-pointer">
           <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={settings.guitar.volume}
-            onChange={(e) =>
-              updateGuitarSettings({ volume: parseFloat(e.target.value) })
-            }
+            type="checkbox"
+            checked={settings.guitar.enabled}
+            onChange={(e) => handleSettingChange('enabled', e.target.checked)}
+            className="mr-2"
           />
+          Enable Guitar
         </label>
       </div>
 
-      <div className="setting-group">
-        <label>
-          Guitar Type
-          <select
-            value={settings.guitar.type}
-            onChange={(e) =>
-              updateGuitarSettings({ type: e.target.value as any })
-            }
-          >
-            <option value="acoustic">Acoustic</option>
-            <option value="electric">Electric</option>
-            <option value="classical">Classical</option>
-          </select>
-        </label>
-      </div>
+      {settings.guitar.enabled && (
+        <>
+          <div className="flex flex-col">
+            <label className="mb-1">Volume</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={settings.guitar.volume}
+              onChange={(e) =>
+                handleSettingChange('volume', parseFloat(e.target.value))
+              }
+              className="w-full"
+            />
+          </div>
 
-      {/* Add similar controls for distortion, reverb, and delay */}
+          <div className="flex flex-col">
+            <label className="mb-1">Reverb</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={settings.guitar.reverb}
+              onChange={(e) =>
+                handleSettingChange('reverb', parseFloat(e.target.value))
+              }
+              className="w-full"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="mb-1">Delay</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={settings.guitar.delay}
+              onChange={(e) =>
+                handleSettingChange('delay', parseFloat(e.target.value))
+              }
+              className="w-full"
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }

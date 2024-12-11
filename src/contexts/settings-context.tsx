@@ -4,6 +4,7 @@ import { type Settings, DEFAULT_GUITAR_SETTINGS } from '../lib/types/settings'
 
 interface SettingsContextType {
   settings: Settings
+  updateSettings: (settings: Partial<Settings>) => void
   updateGuitarSettings: (updates: Partial<Settings['guitar']>) => void
 }
 
@@ -16,6 +17,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     guitar: DEFAULT_GUITAR_SETTINGS,
   })
 
+  const updateSettings = (updates: Partial<Settings>) => {
+    setSettings((prev) => ({ ...prev, ...updates }))
+  }
+
   const updateGuitarSettings = (updates: Partial<Settings['guitar']>) => {
     setSettings((prev) => ({
       ...prev,
@@ -27,7 +32,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SettingsContext.Provider value={{ settings, updateGuitarSettings }}>
+    <SettingsContext.Provider
+      value={{ settings, updateGuitarSettings, updateSettings }}
+    >
       {children}
     </SettingsContext.Provider>
   )

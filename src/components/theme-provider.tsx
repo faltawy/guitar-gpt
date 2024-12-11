@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { useSettings } from '@/lib/stores/settings'
 
 type Theme = 'dark' | 'light' | 'system'
 

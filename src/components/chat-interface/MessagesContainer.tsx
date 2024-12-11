@@ -21,9 +21,9 @@ export function MessagesContainer({ messages }: Props) {
   }, [messages])
 
   return (
-    <div className="flex-1 overflow-hidden relative">
+    <div className="flex-1 overflow-hidden relative container">
       <div className="absolute inset-0 overflow-y-auto">
-        <div className="mx-auto flex flex-col gap-6 p-4 max-w-3xl w-full">
+        <div className="mx-auto flex flex-col gap-6 p-4 w-full">
           {messages.length === 0 ? (
             <EmptyState />
           ) : (

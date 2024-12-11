@@ -8,6 +8,16 @@ interface SettingsState {
   setApiKey: (key: string) => void
   theme: 'light' | 'dark' | 'system'
   clearHistory: () => void
+  updateSettings: (newSettings: Partial<Settings>) => void
+}
+
+const defaultSettings: Settings = {
+  guitar: {
+    delay: 0,
+    enabled: true,
+    reverb: 0,
+    volume: 0.75,
+  },
 }
 
 export const useSettings = create<SettingsState>()(
@@ -23,6 +33,10 @@ export const useSettings = create<SettingsState>()(
         localStorage.removeItem('chat-history')
         window.location.reload()
       },
+      updateSettings: (newSettings: Partial<Settings>) =>
+        set((state) => ({
+          settings: { ...state.settings, ...newSettings },
+        })),
     }),
     {
       name: 'settings-storage',
