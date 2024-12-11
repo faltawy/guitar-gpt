@@ -5,38 +5,14 @@ import useSound from 'react-guitar-sound'
 import { Button } from '@/components/ui/button'
 import { PlayCircle } from 'lucide-react'
 import type { Note } from '@/lib/music-producer'
+import { noteToFret } from '@/lib/music-producer'
 import { Card } from '@/components/ui/card'
+import { playGuitarNotes } from '@/lib/music-producer'
 
 interface GuitarVisualizerProps {
   notes: Note[] | undefined
   onReplay: () => void
   isPlaying?: boolean
-}
-
-const noteToFret = (note: string): [number, number] => {
-  // Map of notes to [string, fret] positions
-  const guitarMap: Record<string, [number, number]> = {
-    E2: [5, 0],
-    F2: [5, 1],
-    'F#2': [5, 2],
-    G2: [5, 3],
-    A2: [4, 0],
-    B2: [4, 2],
-    C3: [4, 3],
-    D3: [3, 0],
-    E3: [3, 2],
-    F3: [3, 3],
-    G3: [2, 0],
-    A3: [2, 2],
-    B3: [2, 4],
-    C4: [1, 1],
-    D4: [1, 3],
-    E4: [1, 5],
-    F4: [0, 1],
-    G4: [0, 3],
-    A4: [0, 5],
-  }
-  return guitarMap[note] || [0, 0]
 }
 
 export function GuitarVisualizer({
@@ -51,22 +27,16 @@ export function GuitarVisualizer({
     tuning: standard,
   })
 
+  const handleReplay = async () => {
+    await playGuitarNotes(notes, play)
+  }
+
   const visualizeNote = (note: Note) => {
     const [string, fret] = noteToFret(note.note)
     const newStrings = [0, 0, 0, 0, 0, 0]
     newStrings[string] = fret
     setStrings(newStrings)
-  }
-
-  const handleReplay = () => {
-    const firstNote = notes?.[0]
-    if (firstNote) {
-      const [string, fret] = noteToFret(firstNote.note)
-      const newStrings = [0, 0, 0, 0, 0, 0]
-      newStrings[string] = fret
-      setStrings(newStrings)
-    }
-    onReplay()
+    play(string)
   }
 
   return (

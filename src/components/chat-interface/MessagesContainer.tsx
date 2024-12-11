@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '../ui/skeleton'
@@ -7,7 +7,9 @@ import Markdown from 'react-markdown'
 import type { ChatMessage } from '@/lib/db'
 import remarkGfm from 'remark-gfm'
 import { NoteVisualizer } from './NoteVisualizer'
-import { Note, playGuitarNotes } from '@/lib/music-producer'
+import { type Note, playGuitarNotes } from '@/lib/music-producer'
+import { standard } from 'react-guitar-tunings'
+import useSound from 'react-guitar-sound'
 
 type Props = {
   messages: ChatMessage[]
@@ -70,11 +72,16 @@ function AssistantMessageItem({
 }: { message: Extract<ChatMessage, { role: 'assistant' }> }) {
   const [isPlaying, setIsPlaying] = useState(false)
 
+  const { play } = useSound({
+    fretting: [0, 0, 0, 0, 0, 0],
+    tuning: standard,
+  })
+
   const handleReplay = async (notes: Note[]) => {
     if (isPlaying) return
     setIsPlaying(true)
     try {
-      await playGuitarNotes(notes)
+      await playGuitarNotes(notes, play)
     } finally {
       setIsPlaying(false)
     }

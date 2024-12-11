@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { initializeAudio, getAudioState } from '@/lib/music-producer'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -12,24 +11,8 @@ import { ChatHeader } from './ChatHeader'
 import { useChat } from '@/contexts/chat-context'
 
 export function ChatInterface() {
-  const [audioInitialized, setAudioInitialized] = useState(false)
   const [showAudioError, setShowAudioError] = useState(false)
   const { messages, sendMessage, isLoading } = useChat()
-
-  useEffect(() => {
-    async function init() {
-      const success = await initializeAudio()
-      if (!success) {
-        setShowAudioError(true)
-      }
-      setAudioInitialized(true)
-    }
-    init()
-  }, [])
-
-  if (!audioInitialized) {
-    return <div>Loading...</div>
-  }
 
   return (
     <div className="flex flex-col h-full">

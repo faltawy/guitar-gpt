@@ -2,6 +2,46 @@ import * as Tone from 'tone'
 import z from 'zod'
 import { noteNameSchema, notesMap } from './notes-map'
 import type { GuitarSettings } from '../types/settings'
+import { standard } from 'react-guitar-tunings'
+import useSound from 'react-guitar-sound'
+
+// Convert note to [string, fret] format for react-guitar
+export function noteToFret(note: string): [number, number] {
+  // Map of notes to [string, fret] positions on standard tuning
+  const guitarMap: Record<string, [number, number]> = {
+    E2: [5, 0],
+    F2: [5, 1],
+    'F#2': [5, 2],
+    G2: [5, 3],
+    'G#2': [5, 4],
+    A2: [4, 0],
+    'A#2': [4, 1],
+    B2: [4, 2],
+    C3: [4, 3],
+    'C#3': [4, 4],
+    D3: [3, 0],
+    'D#3': [3, 1],
+    E3: [3, 2],
+    F3: [3, 3],
+    'F#3': [3, 4],
+    G3: [2, 0],
+    'G#3': [2, 1],
+    A3: [2, 2],
+    'A#3': [2, 3],
+    B3: [2, 4],
+    C4: [1, 1],
+    'C#4': [1, 2],
+    D4: [1, 3],
+    'D#4': [1, 4],
+    E4: [1, 5],
+    F4: [0, 1],
+    'F#4': [0, 2],
+    G4: [0, 3],
+    'G#4': [0, 4],
+    A4: [0, 5],
+  }
+  return guitarMap[note] || [0, 0]
+}
 
 const noteDuration = z.enum([
   '1n',
@@ -27,152 +67,28 @@ export const noteSchema = z.object({
 export type Note = z.infer<typeof noteSchema>
 
 const state = {
-  loaded: false,
   isPlaying: false,
-  audioSupported: false,
-  permissionGranted: false,
 }
 
-async function checkAudioSupport(): Promise<boolean> {
-  try {
-    // Check if the Web Audio API is supported
-    if (!window.AudioContext && !window.webkitAudioContext) {
-      throw new Error('Web Audio API is not supported in this browser')
-    }
-
-    // Test if we can create an audio context
-    const audioContext = new (
-      window.AudioContext || window.webkitAudioContext
-    )()
-    await audioContext.resume()
-    audioContext.close()
-
-    state.audioSupported = true
-    state.permissionGranted = true
-    return true
-  } catch (error) {
-    console.error('Audio not supported or permission denied:', error)
-    state.audioSupported = false
-    state.permissionGranted = false
-    return false
-  }
-}
-
-function createGuitarSampler() {
-  // Check audio support before starting
-  if (!state.audioSupported) {
-    console.error('Audio is not supported or permission was denied')
-    return null
-  }
-
-  // Start Tone.js context when creating sampler
-  Tone.start()
-
-  const sampler = new Tone.Sampler(notesMap, () => {
-    state.loaded = true
-  }).toDestination()
-
-  return sampler
-}
-
-let guitarSampler: Tone.Sampler | null = null
-
-export async function initializeAudio() {
-  const supported = await checkAudioSupport()
-  if (supported) {
-    guitarSampler = createGuitarSampler()
-    return true
-  }
-  return false
-}
-
-export function getAudioState() {
-  return {
-    supported: state.audioSupported,
-    permissionGranted: state.permissionGranted,
-    loaded: state.loaded,
-  }
-}
-
-/**
- * Play a complete guitar note.
- * @param note - The guitar note to play (e.g., 'E4').
- * @param duration - The duration of the note (e.g., '4n').
- * @param time - Optional time to play the note (in seconds).
- * @param effects - Optional effects like reverb or delay.
- */
-export function playGuitarNote(
-  note: keyof typeof notesMap,
-  duration: string,
-  time?: number,
-  velocity: number = 0.8,
-  effects: {
-    reverb?: boolean
-    delay?: boolean
-    pan?: number
-  } = {},
+export async function playGuitarNotes(
+  notes: Note[],
+  playSound: (string: number) => void,
 ) {
-  if (!guitarSampler || !state.loaded) {
-    console.error('Guitar samples are not loaded yet!')
-    return
-  }
-
-  // Create a chain starting with the sampler
-  let chain = guitarSampler
-
-  // Add panning if specified
-  if (effects.pan !== undefined) {
-    const panner = new Tone.Panner(effects.pan).toDestination()
-    chain.connect(panner)
-  }
-
-  // Add effects if specified
-  if (effects.reverb) {
-    const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 }).toDestination()
-    chain.connect(reverb)
-  }
-  if (effects.delay) {
-    const delay = new Tone.PingPongDelay({
-      delayTime: '8n',
-      feedback: 0.2,
-      wet: 0.2,
-    }).toDestination()
-    chain.connect(delay)
-  }
-
-  // Schedule the note to play at the specified time with velocity
-  if (time !== undefined) {
-    chain.triggerAttackRelease(note, duration, time, velocity)
-  } else {
-    chain.triggerAttackRelease(note, duration, Tone.now(), velocity)
-  }
-}
-
-export async function playGuitarNotes(notes: Note[]) {
-  // Prevent multiple playback instances
   if (state.isPlaying) return
   state.isPlaying = true
 
   try {
-    // Make sure Tone.js is started
-    await Tone.start()
+    for (const note of notes) {
+      const [string, fret] = noteToFret(note.note)
+      const strings = [0, 0, 0, 0, 0, 0]
+      strings[string] = fret
 
-    // Calculate total duration for proper scheduling
-    const now = Tone.now()
-    let currentTime = now
+      playSound(string)
 
-    // Schedule all notes with proper timing
-    notes.forEach(({ note, duration }) => {
-      playGuitarNote(note as keyof typeof notesMap, duration, currentTime)
-
-      // Calculate next note timing based on duration
-      const durationInSeconds = Tone.Time(duration).toSeconds()
-      currentTime += durationInSeconds
-    })
-
-    // Wait for the sequence to finish before allowing new playback
-    const totalDuration = currentTime - now
-    await new Promise((resolve) => setTimeout(resolve, totalDuration * 1000))
+      // Wait for the note duration
+      const durationMs = getDurationInMs(note.duration)
+      await new Promise((resolve) => setTimeout(resolve, durationMs))
+    }
   } catch (error) {
     console.error('Error playing guitar notes:', error)
   } finally {
@@ -180,9 +96,21 @@ export async function playGuitarNotes(notes: Note[]) {
   }
 }
 
-// Add a function to stop playback if needed
+function getDurationInMs(duration: string): number {
+  const durationMap: Record<string, number> = {
+    '1n': 2000,
+    '2n': 1000,
+    '2n.': 1500,
+    '4n': 500,
+    '4n.': 750,
+    '8n': 250,
+    '8n.': 375,
+    '16n': 125,
+  }
+  return durationMap[duration] || 500
+}
+
 export function stopGuitarNotes() {
-  guitarSampler?.releaseAll()
   state.isPlaying = false
 }
 
@@ -202,7 +130,9 @@ export class MusicProducer {
       delay: this.guitarSettings.delay > 0,
     }))
 
-    await playGuitarNotes(notesWithSettings)
+    await playGuitarNotes(notesWithSettings, (string) => {
+      // Implement the playSound function to handle the sound playback
+    })
   }
 
   updateSettings(newSettings: GuitarSettings) {

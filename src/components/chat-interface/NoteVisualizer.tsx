@@ -2,7 +2,10 @@ import type { Note } from '@/lib/music-producer'
 import { Button } from '@/components/ui/button'
 import { PlayCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { playGuitarNote } from '@/lib/music-producer'
+import { noteToFret } from '@/lib/music-producer'
+import Guitar from 'react-guitar'
+import { standard } from 'react-guitar-tunings'
+import useSound from 'react-guitar-sound'
 
 interface NoteVisualizerProps {
   notes: Note[] | undefined
@@ -16,11 +19,11 @@ export function NoteVisualizer({
   isPlaying,
 }: NoteVisualizerProps) {
   const handleNoteClick = (note: Note) => {
-    playGuitarNote(note.note, note.duration, undefined, note.velocity, {
-      reverb: note.reverb,
-      delay: note.delay,
-      pan: note.pan,
-    })
+    // playGuitarNotes(note.note, note.duration, undefined, note.velocity, {
+    //   reverb: note.reverb,
+    //   delay: note.delay,
+    //   pan: note.pan,
+    // })
   }
 
   return (
