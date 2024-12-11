@@ -139,3 +139,29 @@ export class MusicProducer {
     this.guitarSettings = newSettings
   }
 }
+
+export type GuitarNote = {
+  string: number
+  fret: number
+  duration: '1n' | '2n' | '4n' | '8n' | '16n' | '2n.' | '4n.' | '8n.'
+  velocity: number
+}
+
+// Add a conversion function
+export function guitarNoteToNote(gNote: GuitarNote): Note {
+  const fretMap = [
+    ['F4', 'G4', 'A4'], // String 0 (high E)
+    ['C4', 'D4', 'E4'], // String 1 (B)
+    ['G3', 'A3', 'B3'], // String 2 (G)
+    ['D3', 'E3', 'F3'], // String 3 (D)
+    ['A2', 'B2', 'C3'], // String 4 (A)
+    ['E2', 'F2', 'G2'], // String 5 (low E)
+  ]
+
+  const note = fretMap[gNote.string]?.[gNote.fret - 1] || 'E2'
+  return {
+    note: note as keyof typeof notesMap,
+    duration: gNote.duration,
+    velocity: gNote.velocity,
+  }
+}

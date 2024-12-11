@@ -1,14 +1,17 @@
-import type { Note } from '@/lib/music-producer'
+import {
+  type Note,
+  type GuitarNote,
+  guitarNoteToNote,
+} from '@/lib/music-producer'
 import { Button } from '@/components/ui/button'
 import { PlayCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { noteToFret } from '@/lib/music-producer'
 import Guitar from 'react-guitar'
 import { standard } from 'react-guitar-tunings'
 import useSound from 'react-guitar-sound'
 
 interface NoteVisualizerProps {
-  notes: Note[] | undefined
+  notes: GuitarNote[]
   onReplay: () => void
   isPlaying?: boolean
 }
@@ -26,10 +29,13 @@ export function NoteVisualizer({
     // })
   }
 
+  // Convert GuitarNotes to Notes for visualization
+  const convertedNotes = notes.map(guitarNoteToNote)
+
   return (
     <div className="flex flex-col gap-2 p-2 rounded-lg border bg-muted/30">
       <div className="flex items-center gap-2 overflow-x-auto p-2">
-        {notes.map((note, i) => (
+        {convertedNotes.map((note, i) => (
           <div key={i} className="flex flex-col items-center text-sm">
             <div className="text-xs font-mono text-muted-foreground">
               {note.duration}

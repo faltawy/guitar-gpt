@@ -1,13 +1,20 @@
-import { noteSchema } from '@/lib/music-producer'
 import type { ChatMessage } from '@/lib/db'
 import OpenAI from 'openai'
 import { zodResponseFormat } from 'openai/helpers/zod'
 import { z } from 'zod'
-import { availableNotes } from '../music-producer/notes-map'
 import { useSettings } from '@/lib/stores/settings'
 import { db } from '@/lib/db'
 import { MusicProducer } from '@/lib/music-producer'
 import type { GuitarSettings } from '@/lib/types/settings'
+
+const noteSchema = z.object({
+  string: z.number().describe('The string number to play, from 0 to 5'),
+  fret: z.number().describe('The fret position to play, from 0 to 12'),
+  duration: z
+    .enum(['1n', '2n', '4n', '8n', '16n'])
+    .describe('The duration of the note'),
+  velocity: z.number().describe('The velocity of the note'),
+})
 
 const AIResponseSchema = z
   .object({
@@ -19,7 +26,7 @@ const AIResponseSchema = z
               kind: z.literal('notes'),
               notes: z.array(noteSchema),
             })
-            .describe('A sequence of notes to play'),
+            .describe('A sequence of guitar string/fret positions to play'),
           z
             .object({
               kind: z.literal('message'),
@@ -30,34 +37,44 @@ const AIResponseSchema = z
       )
       .describe('A sequence of messages from the AI'),
   })
-  .describe('A response from the AI, containing notes and messages')
+  .describe('A response from the AI, containing guitar positions and messages')
 
 export type AIResponse = z.infer<typeof AIResponseSchema>
 
 const SYSTEM_PROMPT = `
 You are GuitarGPT, an AI assistant specialized in guitar and music theory, that will help the user to learn guitar and music theory.
-- Available notes are ${availableNotes.join('\t')}.
-- When generating music:
-  * For chords: Generate all notes that make up the chord
-  * For songs: Break down into sequences of notes/chords
-  * For exercises: Provide complete note sequences
-- Always include timing and rhythm information using note durations
-- Generate detailed explanations for the notes or the chords generated
-- Be super creative and follow the user's instructions, be a great guitar teacher
+- When generating guitar music, use standard tuning (E A D G B E) and provide:
+  * String numbers (0-5, where 0 is high E and 5 is low E)
+  * Fret positions (0-12)
+  * For chords: Generate all string/fret combinations
+  * For melodies: Break down into sequences of string/fret positions
+  * For exercises: Provide complete sequences with string/fret positions
+- Always include timing and rhythm information using note durations:
+  * Use '1n' for whole notes
+  * '2n' for half notes
+  * '4n' for quarter notes
+  * '8n' for eighth notes
+  * '16n' for sixteenth notes
 - When user asks for a song or chord progression:
-  * Break it down into multiple playable sequences
-  * Include strumming patterns as separate note sequences
-  * Provide both individual notes and full chord sequences
+  * Break it down into playable sequences
+  * Show exact string and fret positions
+  * Include strumming patterns with timing
+  * Provide both single notes and chord shapes
 - Please respond in markdown for the text messages
-- Include fingering patterns and strumming patterns when relevant
+- Include fingering patterns and hand positions
 - Provide progressive learning paths for beginners
 - Suggest exercises and practice routines
 - Include music theory concepts gradually
 - Reference famous songs for practical examples
-- Generate multiple note sequences in a single response when appropriate
 - If you don't know the answer, just say that you don't know
-- Always generate complete musical phrases - don't leave sequences incomplete.
-- play means to generate a sequence of notes to play.
+- Always generate complete musical phrases
+- Available notes should be played in these positions:
+  * High E string (0): F4(1), G4(3), A4(5)
+  * B string (1): C4(1), D4(3), E4(5)
+  * G string (2): G3(0), A3(2), B3(4)
+  * D string (3): D3(0), E3(2), F3(3)
+  * A string (4): A2(0), B2(2), C3(3)
+  * Low E string (5): E2(0), F2(1), G2(3)
 `
 
 const MAX_CONTEXT_MESSAGES = 20

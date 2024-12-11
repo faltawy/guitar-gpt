@@ -1,15 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { cn } from '@/lib/utils'
 import { Skeleton } from '../ui/skeleton'
 import { Music } from 'lucide-react'
 import Markdown from 'react-markdown'
 import type { ChatMessage } from '@/lib/db'
 import remarkGfm from 'remark-gfm'
 import { NoteVisualizer } from './NoteVisualizer'
-import { type Note, playGuitarNotes } from '@/lib/music-producer'
+import {
+  guitarNoteToNote,
+  type Note,
+  playGuitarNotes,
+} from '@/lib/music-producer'
 import { standard } from 'react-guitar-tunings'
 import useSound from 'react-guitar-sound'
+import { GuitarNote } from '@/lib/music-producer'
 
 type Props = {
   messages: ChatMessage[]
@@ -77,10 +81,11 @@ function AssistantMessageItem({
     tuning: standard,
   })
 
-  const handleReplay = async (notes: Note[]) => {
+  const handleReplay = async (guitarNotes: GuitarNote[]) => {
     if (isPlaying) return
     setIsPlaying(true)
     try {
+      const notes = guitarNotes.map(guitarNoteToNote)
       await playGuitarNotes(notes, play)
     } finally {
       setIsPlaying(false)
