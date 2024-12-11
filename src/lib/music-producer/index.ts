@@ -35,13 +35,9 @@ function createGuitarSampler() {
   // Start Tone.js context when creating sampler
   Tone.start()
 
-  const sampler = new Tone.Sampler(
-    notesMap,
-    () => {
-      state.loaded = true
-    },
-    `https://${process.env.VERCEL_URL}` || 'http://localhost:3000/',
-  ).toDestination()
+  const sampler = new Tone.Sampler(notesMap, () => {
+    state.loaded = true
+  }).toDestination()
 
   return sampler
 }
