@@ -29,9 +29,42 @@ export type Note = z.infer<typeof noteSchema>
 const state = {
   loaded: false,
   isPlaying: false,
+  audioSupported: false,
+  permissionGranted: false,
+}
+
+async function checkAudioSupport(): Promise<boolean> {
+  try {
+    // Check if the Web Audio API is supported
+    if (!window.AudioContext && !window.webkitAudioContext) {
+      throw new Error('Web Audio API is not supported in this browser')
+    }
+
+    // Test if we can create an audio context
+    const audioContext = new (
+      window.AudioContext || window.webkitAudioContext
+    )()
+    await audioContext.resume()
+    audioContext.close()
+
+    state.audioSupported = true
+    state.permissionGranted = true
+    return true
+  } catch (error) {
+    console.error('Audio not supported or permission denied:', error)
+    state.audioSupported = false
+    state.permissionGranted = false
+    return false
+  }
 }
 
 function createGuitarSampler() {
+  // Check audio support before starting
+  if (!state.audioSupported) {
+    console.error('Audio is not supported or permission was denied')
+    return null
+  }
+
   // Start Tone.js context when creating sampler
   Tone.start()
 
@@ -42,7 +75,24 @@ function createGuitarSampler() {
   return sampler
 }
 
-const guitarSampler = createGuitarSampler()
+let guitarSampler: Tone.Sampler | null = null
+
+export async function initializeAudio() {
+  const supported = await checkAudioSupport()
+  if (supported) {
+    guitarSampler = createGuitarSampler()
+    return true
+  }
+  return false
+}
+
+export function getAudioState() {
+  return {
+    supported: state.audioSupported,
+    permissionGranted: state.permissionGranted,
+    loaded: state.loaded,
+  }
+}
 
 /**
  * Play a complete guitar note.
@@ -62,7 +112,7 @@ export function playGuitarNote(
     pan?: number
   } = {},
 ) {
-  if (!state.loaded) {
+  if (!guitarSampler || !state.loaded) {
     console.error('Guitar samples are not loaded yet!')
     return
   }
@@ -132,7 +182,7 @@ export async function playGuitarNotes(notes: Note[]) {
 
 // Add a function to stop playback if needed
 export function stopGuitarNotes() {
-  guitarSampler.releaseAll()
+  guitarSampler?.releaseAll()
   state.isPlaying = false
 }
 
