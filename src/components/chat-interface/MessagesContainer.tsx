@@ -8,6 +8,7 @@ import type { ChatMessage } from '@/lib/db'
 import remarkGfm from 'remark-gfm'
 import { NoteVisualizer } from './NoteVisualizer'
 import { playGuitarNotes } from '@/lib/music-producer'
+import { GuitarVisualizer } from './GuitarVisualizer'
 
 type Props = {
   messages: ChatMessage[]
@@ -92,11 +93,18 @@ function AssistantMessageItem({
           {message.isLoading && <LoadingDots />}
         </div>
         {hasNotes && (
-          <NoteVisualizer
-            notes={message.notes}
-            onReplay={handleReplay}
-            isPlaying={message.isLoading}
-          />
+          <div className="space-y-4">
+            <NoteVisualizer
+              notes={message.notes}
+              onReplay={() => handleReplay()}
+              isPlaying={message.isLoading}
+            />
+            <GuitarVisualizer
+              notes={message.notes}
+              onReplay={() => handleReplay()}
+              isPlaying={message.isLoading}
+            />
+          </div>
         )}
       </div>
     </div>
