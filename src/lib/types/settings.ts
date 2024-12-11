@@ -17,3 +17,9 @@ export const DEFAULT_GUITAR_SETTINGS: GuitarSettings = {
   delay: 0,
   type: 'acoustic',
 }
+
+export interface SettingsState {
+  theme: 'light' | 'dark' | 'system'
+  clearHistory: () => void
+  // ... other existing settings
+}

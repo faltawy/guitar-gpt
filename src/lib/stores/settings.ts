@@ -6,6 +6,8 @@ interface SettingsState {
   settings: Settings
   apiKey: string | null
   setApiKey: (key: string) => void
+  theme: 'light' | 'dark' | 'system'
+  clearHistory: () => void
 }
 
 export const useSettings = create<SettingsState>()(
@@ -16,6 +18,11 @@ export const useSettings = create<SettingsState>()(
       },
       apiKey: null,
       setApiKey: (key) => set({ apiKey: key }),
+      theme: 'system',
+      clearHistory: () => {
+        localStorage.removeItem('chat-history')
+        window.location.reload()
+      },
     }),
     {
       name: 'settings-storage',
