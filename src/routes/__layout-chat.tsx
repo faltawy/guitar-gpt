@@ -3,7 +3,6 @@ import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { ConversationsAside } from '@/components/chat-interface/ConversationsAside'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { ChatProvider } from '@/contexts/chat-context'
-import { ApiKeyDialog } from '@/components/api-key-dialog'
 
 export const Route = createFileRoute('/__layout-chat')({
   component: () => (
@@ -12,7 +11,6 @@ export const Route = createFileRoute('/__layout-chat')({
         <ConversationsAside />
         <SidebarInset>
           <Outlet />
-          <ApiKeyDialog />
         </SidebarInset>
       </ChatProvider>
     </SidebarProvider>

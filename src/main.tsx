@@ -13,6 +13,7 @@ import './index.css'
 import { ProfileProvider } from './contexts/profile-context'
 import { OnboardingDialog } from './components/onboarding-dialog'
 import { Analytics } from '@vercel/analytics/react'
+import { SettingsProvider } from './contexts/settings-context'
 const isBotAgent = /bot|googlebot|crawler|spider|robot|crawling/i.test(
   navigator.userAgent,
 )
@@ -42,7 +43,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ThemeProvider defaultTheme="system" storageKey="guitar-gpt-theme">
       <QueryClientProvider client={queryClient}>
         <ProfileProvider>
-          <RouterProvider router={router} />
+          <SettingsProvider>
+            <RouterProvider router={router} />
+          </SettingsProvider>
           <OnboardingDialog />
         </ProfileProvider>
       </QueryClientProvider>

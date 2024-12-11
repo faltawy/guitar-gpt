@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import ReactMarkdown from 'react-markdown'
-import { Github } from 'lucide-react'
 
 const aboutContent = `
 # Guitar GPT
@@ -23,21 +22,6 @@ An AI-powered guitar companion that helps you learn and explore music.
 - 🤖 AI-powered musical assistance
 - 🌙 Dark mode support
 - 💾 Conversation history
-
-## Technology
-
-Built with:
-- React + TypeScript
-- Tailwind CSS
-- Tone.js for audio
-- Tanstack Router
-- Shadcn/ui components
-
-## Credits
-
-Created with ❤️ by [Your Name]
-
-Guitar samples from [source]
 `
 
 interface AboutDialogProps {

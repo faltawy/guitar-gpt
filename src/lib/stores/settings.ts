@@ -1,28 +1,24 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { DEFAULT_GUITAR_SETTINGS, type Settings } from '../types/settings'
 
 interface SettingsState {
-  theme: 'light' | 'dark' | 'system'
+  settings: Settings
   apiKey: string | null
-  setTheme: (theme: 'light' | 'dark' | 'system') => void
-  setApiKey: (apiKey: string) => void
-  clearHistory: () => void
+  setApiKey: (key: string) => void
 }
 
 export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
-      theme: 'system',
-      apiKey: null,
-      setTheme: (theme) => set({ theme }),
-      setApiKey: (apiKey) => set({ apiKey }),
-      clearHistory: () => {
-        localStorage.removeItem('chat-history')
-        window.location.reload()
+      settings: {
+        guitar: DEFAULT_GUITAR_SETTINGS,
       },
+      apiKey: null,
+      setApiKey: (key) => set({ apiKey: key }),
     }),
     {
-      name: 'settings',
+      name: 'settings-storage',
     },
   ),
 )

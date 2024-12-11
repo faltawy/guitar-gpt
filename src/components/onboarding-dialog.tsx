@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -10,59 +10,63 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useSettings } from '@/lib/stores/settings'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Label } from '@/components/ui/label'
-import { db } from '@/lib/db'
 import { Camera } from 'lucide-react'
 import { useProfile } from '@/contexts/profile-context'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  onboardingSchema,
+  type OnboardingFormValues,
+} from '@/lib/schemas/onboarding-schema'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { db } from '@/lib/db'
 
 export function OnboardingDialog() {
   const { apiKey, setApiKey } = useSettings()
   const { profile, isLoading } = useProfile()
-  const [key, setKey] = useState(apiKey || '')
-  const [name, setName] = useState('')
-  const [avatar, setAvatar] = useState<string>('')
-  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const form = useForm<OnboardingFormValues>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      name: '',
+      apiKey: apiKey || '',
+      avatar: '',
+    },
+  })
 
   // Don't show dialog while checking initial profile state
   if (isLoading) return null
 
-  const handleSubmit = async () => {
-    // Only validate API key if it's not already set
-    if (!apiKey) {
-      if (!key.trim()) {
-        setError('API key is required')
-        return
-      }
-
-      // Basic validation that it starts with "sk-"
-      if (!key.startsWith('sk-')) {
-        setError('Invalid API key format')
-        return
-      }
-    }
-
-    if (!name.trim()) {
-      setError('Name is required')
-      return
-    }
-
+  const onSubmit = async (values: OnboardingFormValues) => {
     try {
-      // Save profile to IndexedDB
-      await db.profiles.add({
-        name: name.trim(),
-        avatar: avatar || undefined,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-
-      // Only update API key if it's changed
-      if (key !== apiKey) {
-        setApiKey(key.trim())
+      if (!profile) {
+        await db.profiles.add({
+          name: values.name.trim(),
+          avatar: values.avatar,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
       }
+
+      if (values.apiKey) {
+        setApiKey(values.apiKey.trim())
+      }
+
+      window.location.reload()
     } catch (err) {
       console.error('Error saving profile:', err)
-      setError('Failed to save profile')
+      form.setError('root', {
+        type: 'submit',
+        message: 'Failed to save profile',
+      })
     }
   }
 
@@ -75,7 +79,7 @@ export function OnboardingDialog() {
     if (file) {
       const reader = new FileReader()
       reader.onloadend = () => {
-        setAvatar(reader.result as string)
+        form.setValue('avatar', reader.result as string)
       }
       reader.readAsDataURL(file)
     }
@@ -101,86 +105,92 @@ export function OnboardingDialog() {
             Your information will be stored locally
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-6">
-          {!profile && (
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <Avatar
-                  className="h-20 w-20 cursor-pointer"
-                  onClick={handleAvatarClick}
-                >
-                  <AvatarImage src={avatar} />
-                  <AvatarFallback className="bg-primary/10">
-                    {avatar ? (
-                      name[0]?.toUpperCase()
-                    ) : (
-                      <Camera className="h-8 w-8" />
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
-              <div className="w-full space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value)
-                    setError(null)
-                  }}
-                />
-              </div>
-            </div>
-          )}
 
-          {!apiKey && (
-            <div className="space-y-2">
-              <Label htmlFor="apiKey">OpenAI API Key</Label>
-              <Input
-                id="apiKey"
-                placeholder="sk-..."
-                value={key}
-                onChange={(e) => {
-                  setKey(e.target.value)
-                  setError(null)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSubmit()
-                  }
-                }}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {!profile && (
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                  <Avatar
+                    className="h-20 w-20 cursor-pointer"
+                    onClick={handleAvatarClick}
+                  >
+                    <AvatarImage src={form.watch('avatar')} />
+                    <AvatarFallback className="bg-primary/10">
+                      {form.watch('avatar') ? (
+                        form.watch('name')[0]?.toUpperCase()
+                      ) : (
+                        <Camera className="h-8 w-8" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {!apiKey && (
+              <FormField
+                control={form.control}
+                name="apiKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>OpenAI API Key</FormLabel>
+                    <FormControl>
+                      <Input placeholder="sk-..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      Get your API key from{' '}
+                      <a
+                        href="https://platform.openai.com/api-keys"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        OpenAI's dashboard
+                      </a>
+                    </p>
+                  </FormItem>
+                )}
               />
-              <p className="text-xs text-muted-foreground">
-                Get your API key from{' '}
-                <a
-                  href="https://platform.openai.com/api-keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  OpenAI's dashboard
-                </a>
-              </p>
-            </div>
-          )}
+            )}
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button onClick={handleSubmit}>
-            {!profile
-              ? 'Create Profile'
-              : !apiKey
-                ? 'Save API Key'
-                : 'Continue'}
-          </Button>
-        </div>
+            {form.formState.errors.root && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.root.message}
+              </p>
+            )}
+
+            <Button type="submit" className="w-full">
+              {!profile
+                ? 'Create Profile'
+                : !apiKey
+                  ? 'Save API Key'
+                  : 'Continue'}
+            </Button>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

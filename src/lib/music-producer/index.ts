@@ -1,6 +1,7 @@
 import * as Tone from 'tone'
 import z from 'zod'
 import { noteNameSchema, notesMap } from './notes-map'
+import { GuitarSettings } from '../types/settings'
 
 const noteDuration = z.enum([
   '1n',
@@ -137,4 +138,28 @@ export async function playGuitarNotes(notes: Note[]) {
 export function stopGuitarNotes() {
   guitarSampler.releaseAll()
   state.isPlaying = false
+}
+
+export class MusicProducer {
+  private guitarSettings: GuitarSettings
+
+  constructor(settings: GuitarSettings) {
+    this.guitarSettings = settings
+  }
+
+  async playGuitar(notes: string[]) {
+    const notesWithSettings = notes.map((note) => ({
+      note: note as keyof typeof notesMap,
+      duration: '4n' as const,
+      velocity: this.guitarSettings.volume,
+      reverb: this.guitarSettings.reverb > 0,
+      delay: this.guitarSettings.delay > 0,
+    }))
+
+    await playGuitarNotes(notesWithSettings)
+  }
+
+  updateSettings(newSettings: GuitarSettings) {
+    this.guitarSettings = newSettings
+  }
 }

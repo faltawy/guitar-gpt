@@ -6,6 +6,8 @@ import { z } from 'zod'
 import { availableNotes } from '../music-producer/notes-map'
 import { useSettings } from '@/lib/stores/settings'
 import { db } from '@/lib/db'
+import { MusicProducer } from '@/lib/music-producer'
+import { GuitarSettings } from '@/lib/types/settings'
 
 const AIResponseSchema = z.object({
   message: z.string(),
@@ -30,8 +32,10 @@ const MAX_CONTEXT_MESSAGES = 20
 export class AIService {
   private static instance: AIService
   private openai: OpenAI | null = null
+  private musicProducer: MusicProducer
 
-  private constructor() {
+  private constructor(settings: GuitarSettings) {
+    this.musicProducer = new MusicProducer(settings)
     const apiKey = useSettings.getState().apiKey
     if (apiKey) {
       this.initializeOpenAI(apiKey)
@@ -47,7 +51,7 @@ export class AIService {
 
   static getInstance(): AIService {
     if (!AIService.instance) {
-      AIService.instance = new AIService()
+      AIService.instance = new AIService(useSettings.getState().settings.guitar)
     }
     return AIService.instance
   }
@@ -163,6 +167,10 @@ export class AIService {
     return (
       response?.choices[0]?.message?.content?.trim() || 'Guitar Conversation'
     )
+  }
+
+  updateSettings(settings: GuitarSettings) {
+    this.musicProducer.updateSettings(settings)
   }
 }
 
