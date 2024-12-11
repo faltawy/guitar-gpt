@@ -69,38 +69,43 @@ function UserMessageItem({
 function AssistantMessageItem({
   message,
 }: { message: Extract<ChatMessage, { role: 'assistant' }> }) {
-  const hasNotes = message.notes && message.notes.length > 0
-  const handleReplay = async () => {
-    if (message.notes) {
-      playGuitarNotes(message.notes)
-    }
-  }
-
   return (
-    <div className={cn('flex items-start gap-3')}>
+    <div className="flex items-start gap-3">
       <Avatar>
         <AvatarImage src="/guitar-bot.png" />
         <AvatarFallback>GB</AvatarFallback>
       </Avatar>
       <div className="flex flex-col gap-2 max-w-[85%]">
         <div className="bg-secondary/10 rounded-lg px-4 py-2">
-          <Markdown
-            remarkPlugins={[remarkGfm]}
-            className="prose prose-invert prose-sm"
-          >
-            {message.content}
-          </Markdown>
-          {message.isLoading && <LoadingDots />}
+          {message.isLoading ? (
+            <LoadingDots />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {message.content.map((content, index) => {
+                if (content.kind === 'message') {
+                  return (
+                    <Markdown
+                      remarkPlugins={[remarkGfm]}
+                      className="prose prose-invert prose-sm"
+                      key={index}
+                    >
+                      {content.message}
+                    </Markdown>
+                  )
+                }
+                if (content.kind === 'notes') {
+                  return (
+                    <NoteVisualizer
+                      onReplay={() => {}}
+                      isPlaying={false}
+                      notes={content.notes}
+                    />
+                  )
+                }
+              })}
+            </div>
+          )}
         </div>
-        {hasNotes && (
-          <div className="space-y-4">
-            <NoteVisualizer
-              notes={message.notes}
-              onReplay={() => handleReplay()}
-              isPlaying={message.isLoading}
-            />
-          </div>
-        )}
       </div>
     </div>
   )

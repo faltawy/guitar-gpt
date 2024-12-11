@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import type { Note } from './music-producer'
+import type { AIResponse } from './services/ai-service'
 
 export interface Profile {
   id?: number
@@ -21,9 +22,8 @@ export interface ChatSession {
 
 interface BotMessage {
   role: 'assistant'
-  content: string
+  content: AIResponse['message']
   isLoading: boolean
-  notes?: Note[]
 }
 
 interface UserMessage {

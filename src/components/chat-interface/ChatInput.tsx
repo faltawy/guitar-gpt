@@ -25,7 +25,7 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
   const [message, setMessage] = React.useState('')
 
   return (
-    <Card className="p-4 mt-auto">
+    <div className="p-2">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-2">
           {SUGGESTED_QUESTIONS.map((question) => (
@@ -41,12 +41,13 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
           ))}
         </div>
 
-        <div className="flex gap-2">
+        <div className="relative">
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Ask me anything about guitar..."
-            className="flex-1"
+            className="flex-1 resize-none"
+            rows={2}
             disabled={disabled}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -65,12 +66,13 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
                 setMessage('')
               }
             }}
+            className="absolute bottom-1 right-1"
             disabled={disabled || !message.trim()}
           >
             <SendHorizonal className="h-4 w-4" />
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   )
 }

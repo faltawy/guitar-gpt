@@ -1,4 +1,4 @@
-import { noteSchema, playGuitarNotes } from '@/lib/music-producer'
+import { noteSchema } from '@/lib/music-producer'
 import type { ChatMessage } from '@/lib/db'
 import OpenAI from 'openai'
 import { zodResponseFormat } from 'openai/helpers/zod'
@@ -10,8 +10,18 @@ import { MusicProducer } from '@/lib/music-producer'
 import type { GuitarSettings } from '@/lib/types/settings'
 
 const AIResponseSchema = z.object({
-  message: z.string(),
-  notes: z.array(noteSchema).optional(),
+  message: z.array(
+    z.discriminatedUnion('kind', [
+      z.object({
+        kind: z.literal('notes'),
+        notes: z.array(noteSchema).optional(),
+      }),
+      z.object({
+        kind: z.literal('message'),
+        message: z.string(),
+      }),
+    ]),
+  ),
 })
 
 export type AIResponse = z.infer<typeof AIResponseSchema>
@@ -30,6 +40,8 @@ You are GuitarGPT, an AI assistant specialized in guitar and music theory, that 
 - Suggest exercises and practice routines.
 - Include music theory concepts gradually.
 - Reference famous songs for practical examples.
+- It's fine to generate multiple messages in a single response, just add the kind to the message, and follow the schema.
+- If you don't know the answer, just say that you don't know.
 `
 
 const MAX_CONTEXT_MESSAGES = 20
@@ -71,7 +83,7 @@ export class AIService {
 
     return contextMessages.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
-      content: msg.content,
+      content: JSON.stringify(msg.content),
     }))
   }
 
@@ -110,18 +122,12 @@ export class AIService {
               sessionId,
               createdAt: new Date(),
               isLoading: false,
-              notes: response.notes,
             } as ChatMessage,
           ]
           await this.generateTitleInBackground(sessionId, allMessages)
         }
       }
-
-      // Play the notes if they exist
-      if (response.notes) {
-        playGuitarNotes(response.notes)
-      }
-
+      console.log(response)
       return response
     } catch (error) {
       console.error('AI Service Error:', error)
