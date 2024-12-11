@@ -107,6 +107,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           lastMessage: content,
           updatedAt: new Date(),
         })
+
         // Create and add loading assistant message
         const loadingMessage: ChatMessage = {
           sessionId,
@@ -115,32 +116,33 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           createdAt: new Date(),
           isLoading: true,
         }
-        await db.messages.add(loadingMessage)
+        const loadingId = await db.messages.add(loadingMessage)
+        loadingMessage.id = loadingId
         dispatch({ type: 'ADD_MESSAGE', payload: loadingMessage })
 
         // Get AI response
         const response = await aiService.chat([...state.messages, userMessage])
         if (!response) {
-          // Remove loading message if no response
-          await db.messages.delete(loadingMessage.id!)
-          dispatch({ type: 'DELETE_MESSAGE', payload: loadingMessage.id! })
+          await db.messages.delete(loadingId)
+          dispatch({ type: 'DELETE_MESSAGE', payload: loadingId })
           throw new Error('No response from AI service')
         }
 
         // Update the loading message with actual response
         const assistantMessage: ChatMessage = {
-          updatedAt: new Date(),
           ...loadingMessage,
+          content: response.message,
+          isLoading: false,
+          updatedAt: new Date(),
         }
 
-        await db.messages.update(loadingMessage.id!, {
-          ...assistantMessage,
-        })
+        await db.messages.update(loadingId, assistantMessage as any)
         dispatch({
           type: 'UPDATE_MESSAGE',
-          payload: { id: loadingMessage.id!, updates: assistantMessage },
+          payload: { id: loadingId, updates: assistantMessage },
         })
-      } catch {
+      } catch (error) {
+        console.error('Chat error:', error)
         const errorMessage: ChatMessage = {
           sessionId,
           role: 'assistant',
