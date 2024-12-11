@@ -99,11 +99,6 @@ function AssistantMessageItem({
               onReplay={() => handleReplay()}
               isPlaying={message.isLoading}
             />
-            <GuitarVisualizer
-              notes={message.notes}
-              onReplay={() => handleReplay()}
-              isPlaying={message.isLoading}
-            />
           </div>
         )}
       </div>
