@@ -35,7 +35,11 @@ export function ChatInterface() {
     <div className="flex flex-col h-full">
       <ChatHeader />
       <MessagesContainer messages={messages} />
-      <ChatInput onSubmit={sendMessage} disabled={isLoading} />
+      <ChatInput
+        onSubmit={sendMessage}
+        disabled={isLoading}
+        hasPreviousMessages={messages.length > 0}
+      />
 
       <Dialog open={showAudioError} onOpenChange={setShowAudioError}>
         <DialogContent>

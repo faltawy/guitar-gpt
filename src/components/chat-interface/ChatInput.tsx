@@ -8,6 +8,7 @@ import { SendHorizonal } from 'lucide-react'
 interface ChatInputProps {
   onSubmit: (message: string) => void
   disabled?: boolean
+  hasPreviousMessages?: boolean
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -21,25 +22,31 @@ const SUGGESTED_QUESTIONS = [
   'Teach me chord progressions',
 ]
 
-export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
+export function ChatInput({
+  onSubmit,
+  disabled,
+  hasPreviousMessages = false,
+}: ChatInputProps) {
   const [message, setMessage] = React.useState('')
 
   return (
     <div className="p-2">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-2">
-          {SUGGESTED_QUESTIONS.map((question) => (
-            <Button
-              key={question}
-              variant="outline"
-              size="sm"
-              onClick={() => onSubmit(question)}
-              disabled={disabled}
-            >
-              {question}
-            </Button>
-          ))}
-        </div>
+        {!hasPreviousMessages && (
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTED_QUESTIONS.map((question) => (
+              <Button
+                key={question}
+                variant="outline"
+                size="sm"
+                onClick={() => onSubmit(question)}
+                disabled={disabled}
+              >
+                {question}
+              </Button>
+            ))}
+          </div>
+        )}
 
         <div className="relative">
           <Textarea
