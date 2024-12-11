@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '../ui/skeleton'
@@ -7,8 +7,7 @@ import Markdown from 'react-markdown'
 import type { ChatMessage } from '@/lib/db'
 import remarkGfm from 'remark-gfm'
 import { NoteVisualizer } from './NoteVisualizer'
-import { playGuitarNotes } from '@/lib/music-producer'
-import { GuitarVisualizer } from './GuitarVisualizer'
+import { Note, playGuitarNotes } from '@/lib/music-producer'
 
 type Props = {
   messages: ChatMessage[]
@@ -69,6 +68,18 @@ function UserMessageItem({
 function AssistantMessageItem({
   message,
 }: { message: Extract<ChatMessage, { role: 'assistant' }> }) {
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const handleReplay = async (notes: Note[]) => {
+    if (isPlaying) return
+    setIsPlaying(true)
+    try {
+      await playGuitarNotes(notes)
+    } finally {
+      setIsPlaying(false)
+    }
+  }
+
   return (
     <div className="flex items-start gap-3">
       <Avatar>
@@ -96,9 +107,10 @@ function AssistantMessageItem({
                 if (content.kind === 'notes') {
                   return (
                     <NoteVisualizer
-                      onReplay={() => {}}
-                      isPlaying={false}
+                      key={index}
                       notes={content.notes}
+                      onReplay={() => handleReplay(content.notes)}
+                      isPlaying={isPlaying}
                     />
                   )
                 }

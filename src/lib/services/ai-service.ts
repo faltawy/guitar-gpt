@@ -9,20 +9,28 @@ import { db } from '@/lib/db'
 import { MusicProducer } from '@/lib/music-producer'
 import type { GuitarSettings } from '@/lib/types/settings'
 
-const AIResponseSchema = z.object({
-  message: z.array(
-    z.discriminatedUnion('kind', [
-      z.object({
-        kind: z.literal('notes'),
-        notes: z.array(noteSchema).optional(),
-      }),
-      z.object({
-        kind: z.literal('message'),
-        message: z.string(),
-      }),
-    ]),
-  ),
-})
+const AIResponseSchema = z
+  .object({
+    message: z
+      .array(
+        z.discriminatedUnion('kind', [
+          z
+            .object({
+              kind: z.literal('notes'),
+              notes: z.array(noteSchema),
+            })
+            .describe('A sequence of notes to play'),
+          z
+            .object({
+              kind: z.literal('message'),
+              message: z.string(),
+            })
+            .describe('A message from the AI, in markdown'),
+        ]),
+      )
+      .describe('A sequence of messages from the AI'),
+  })
+  .describe('A response from the AI, containing notes and messages')
 
 export type AIResponse = z.infer<typeof AIResponseSchema>
 
@@ -30,11 +38,9 @@ const SYSTEM_PROMPT = `
 You are GuitarGPT, an AI assistant specialized in guitar and music theory, that will help the user to learn guitar and music theory.
 - Available notes are ${availableNotes.join('\t')}.
 - Generate detailed explanations for the notes or the chords generated.
-- Don't generate notes if the user doesn't ask for them.
 - Be super creative and follow the user's instructions, be a great guitar teacher.
 - If the user asks for a song, please generate the chords and the notes for the song.
 - Please respond in markdown for the text messages.
-- Explain everything and every note in detail, don't leave anything out.
 - Include fingering patterns and strumming patterns when relevant.
 - Provide progressive learning paths for beginners.
 - Suggest exercises and practice routines.
@@ -42,6 +48,7 @@ You are GuitarGPT, an AI assistant specialized in guitar and music theory, that 
 - Reference famous songs for practical examples.
 - It's fine to generate multiple messages in a single response, just add the kind to the message, and follow the schema.
 - If you don't know the answer, just say that you don't know.
+- generate a sequence of messages and notes, don't leave anything out.
 `
 
 const MAX_CONTEXT_MESSAGES = 20
@@ -87,7 +94,7 @@ export class AIService {
     }))
   }
 
-  async chat(messages: ChatMessage[]) {
+  async chat(messages: ChatMessage[]): Promise<AIResponse> {
     try {
       if (!this.openai) {
         const apiKey = useSettings.getState().apiKey
@@ -127,12 +134,15 @@ export class AIService {
           await this.generateTitleInBackground(sessionId, allMessages)
         }
       }
-      console.log(response)
       return response
     } catch (error) {
-      console.error('AI Service Error:', error)
       return {
-        message: 'Sorry, I encountered an error. Please try again.',
+        message: [
+          {
+            kind: 'message',
+            message: 'Sorry, I encountered an error. Please try again.',
+          },
+        ],
       }
     }
   }

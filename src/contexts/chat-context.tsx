@@ -111,10 +111,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const loadingMessage: ChatMessage = {
           sessionId,
           role: 'assistant',
-          content: '',
+          content: [],
           createdAt: new Date(),
           isLoading: true,
-          notes: [],
         }
         await db.messages.add(loadingMessage)
         dispatch({ type: 'ADD_MESSAGE', payload: loadingMessage })
@@ -130,28 +129,29 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
         // Update the loading message with actual response
         const assistantMessage: ChatMessage = {
+          updatedAt: new Date(),
           ...loadingMessage,
-          content: response.message,
-          isLoading: false,
-          notes: response.notes,
         }
-        await db.messages.update(loadingMessage.id!, assistantMessage)
+
+        await db.messages.update(loadingMessage.id!, {
+          ...assistantMessage,
+        })
         dispatch({
           type: 'UPDATE_MESSAGE',
           payload: { id: loadingMessage.id!, updates: assistantMessage },
         })
-
-        if (response.notes) {
-          playGuitarNotes(response.notes)
-        }
       } catch {
         const errorMessage: ChatMessage = {
           sessionId,
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
+          content: [
+            {
+              kind: 'message',
+              message: 'Sorry, I encountered an error. Please try again.',
+            },
+          ],
           createdAt: new Date(),
           isLoading: false,
-          notes: [],
         }
         await db.messages.add(errorMessage)
         dispatch({ type: 'ADD_MESSAGE', payload: errorMessage })
