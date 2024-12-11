@@ -85,8 +85,8 @@ export function OnboardingDialog() {
     }
   }
 
-  // Show dialog if either API key or profile is missing
-  const showDialog = !apiKey || !profile
+  // Show dialog only if API key is null/empty or profile is missing
+  const showDialog = !apiKey?.trim() || !profile
 
   return (
     <Dialog open={showDialog} modal>

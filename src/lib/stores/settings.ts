@@ -27,7 +27,7 @@ export const useSettings = create<SettingsState>()(
         guitar: DEFAULT_GUITAR_SETTINGS,
       },
       apiKey: null,
-      setApiKey: (key) => set({ apiKey: key }),
+      setApiKey: (key) => set({ apiKey: key?.trim() }),
       theme: 'system',
       clearHistory: () => {
         localStorage.removeItem('chat-history')
