@@ -11,7 +11,7 @@ interface SettingsState {
   updateSettings: (newSettings: Partial<Settings>) => void
 }
 
-const defaultSettings: Settings = {
+const _defaultSettings: Settings = {
   guitar: {
     delay: 0,
     enabled: true,
