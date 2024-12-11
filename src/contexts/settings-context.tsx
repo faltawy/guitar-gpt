@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react'
-import { Settings, DEFAULT_GUITAR_SETTINGS } from '../lib/types/settings'
+import type React from 'react'
+import { createContext, useContext, useState } from 'react'
+import { type Settings, DEFAULT_GUITAR_SETTINGS } from '../lib/types/settings'
 
 interface SettingsContextType {
   settings: Settings

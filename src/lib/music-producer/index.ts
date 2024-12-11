@@ -1,7 +1,7 @@
 import * as Tone from 'tone'
 import z from 'zod'
 import { noteNameSchema, notesMap } from './notes-map'
-import { GuitarSettings } from '../types/settings'
+import type { GuitarSettings } from '../types/settings'
 
 const noteDuration = z.enum([
   '1n',

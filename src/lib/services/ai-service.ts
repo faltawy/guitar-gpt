@@ -7,7 +7,7 @@ import { availableNotes } from '../music-producer/notes-map'
 import { useSettings } from '@/lib/stores/settings'
 import { db } from '@/lib/db'
 import { MusicProducer } from '@/lib/music-producer'
-import { GuitarSettings } from '@/lib/types/settings'
+import type { GuitarSettings } from '@/lib/types/settings'
 
 const AIResponseSchema = z.object({
   message: z.string(),
