@@ -10,13 +10,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 3000,
     strictPort: true,
-    host: true,
     cors: true,
     hmr: {
       overlay: true,
-    },
-    watch: {
-      usePolling: true,
     },
   },
   plugins: [
@@ -54,25 +50,8 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ],
-  build: {
-    target: 'esnext',
-    minify: 'terser',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'guitar-vendor': ['react-guitar', 'react-guitar-sound', 'tone'],
-          'ui-vendor': [
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-          ],
-        },
-      },
-    },
-  },
   optimizeDeps: {
-    include: ['react-guitar', 'tone'],
+    include: ['tone'],
   },
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
@@ -81,11 +60,4 @@ export default defineConfig(({ mode }) => ({
   envPrefix: ['VITE_', 'GUITAR_GPT_'],
   assetsInclude: ['**/*.mp3', '**/*.wav'],
   publicDir: 'public',
-  base: './',
-  resolve: {
-    alias: [
-      { find: '@sounds', replacement: '/src/assets/sounds' },
-      { find: '@images', replacement: '/src/assets/images' },
-    ],
-  },
 }))
